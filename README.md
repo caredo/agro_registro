@@ -9,11 +9,12 @@ Aplicación móvil y web desarrollada en **Flutter** para facilitar a pequeños 
 * **Problema:** Los pequeños agricultores y comerciantes locales suelen llevar el control de sus cosechas en cuadernos físicos, lo que dificulta conocer en tiempo real el valor consolidado de su inventario y su equivalencia frente al dólar (referencia clave para estimar costos de insumos y fertilizantes importados).
 * **Usuarios objetivo:** Pequeños productores agrícolas, asociaciones campesinas y comerciantes de plazas de mercado.
 * **Alcance funcional (Qué hace la app):**
-  * Permite registrar lotes agrícolas con validación estricta de datos (nombre del producto, cantidad en kilogramos y precio por kg en COP).
+  * Permite configurar un perfil local de productor protegido mediante un PIN numérico de 4 dígitos.
+  * Registra lotes agrícolas con validación estricta de datos (nombre del producto, cantidad en kilogramos y precio por kg en COP).
   * Consulta mediante HTTP la tasa de cambio vigente USD → COP y calcula automáticamente el valor de cada lote y del inventario total en ambas monedas.
   * Almacena los registros localmente de forma persistente para conservar la información tras cerrar la aplicación.
   * Permite consultar el desglose detallado de cada lote y eliminar registros.
-* **Fuera de alcance (Qué no hace):** No gestiona pasarelas de pago, facturación electrónica ni autenticación de usuarios en la nube.
+* **Fuera de alcance (Qué no hace):** No gestiona pasarelas de pago, facturación electrónica ni sincronización de cuentas en la nube.
 
 ---
 
@@ -23,16 +24,17 @@ El código fuente sigue una arquitectura modular organizada por separación de r
 
 ```text
 lib/
-├── main.dart                    # Punto de entrada, configuración Material 3 y ruta inicial
+├── main.dart                    # Punto de entrada, configuración Material 3 y pantalla inicial
 ├── models/
 │   └── lote_model.dart          # Modelo LoteAgricola con serialización toJson / fromJson
 ├── services/
 │   ├── api_service.dart         # Consumo HTTP de la tasa USD/COP con manejo de timeout y respaldo
 │   └── storage_service.dart     # Persistencia local de datos mediante SharedPreferences + JSON
 ├── screens/
-│   ├── home_screen.dart         # Pantalla 1: Resumen financiero, estado de TRM y lista de lotes
-│   ├── add_lote_screen.dart     # Pantalla 2: Formulario validado para registrar nuevos lotes
-│   └── detail_screen.dart       # Pantalla 3: Detalle completo del lote y opción de eliminación
+│   ├── login_screen.dart        # Pantalla 1: Acceso local con perfil y PIN de 4 dígitos
+│   ├── home_screen.dart         # Pantalla 2: Resumen financiero, estado de TRM y lista de lotes
+│   ├── add_lote_screen.dart     # Pantalla 3: Formulario validado para registrar nuevos lotes
+│   └── detail_screen.dart       # Pantalla 4: Detalle completo del lote y opción de eliminación
 └── widgets/
     └── lote_card.dart           # Componente visual reutilizable para renderizar cada lote
 ```
@@ -41,19 +43,20 @@ lib/
 
 ## 3. Pantallas y Flujo de Navegación
 
-La aplicación implementa **3 pantallas principales conectadas mediante navegación imperativa (`Navigator.push` y `Navigator.pop`)**:
+La aplicación implementa **4 pantallas principales conectadas mediante navegación imperativa (`Navigator.pushReplacement`, `Navigator.push` y `Navigator.pop`)**:
 
-1. **Inicio (`HomeScreen`):** Muestra la tarjeta resumen con el valor total del inventario en COP y USD, la tasa de cambio aplicada y el listado dinámico de lotes (`ListView.builder`). Incluye botón de actualización manual y botón flotante para agregar registros.
-2. **Nuevo Lote (`AddLoteScreen`):** Recibe como argumento la tasa USD actual, valida todos los campos mediante `GlobalKey<FormState>` y retorna el nuevo objeto `LoteAgricola` a la pantalla principal con `Navigator.pop(context, nuevoLote)`.
-3. **Detalle del Lote (`DetailScreen`):** Recibe el objeto `LoteAgricola` seleccionado al tocar una tarjeta, despliega todos sus atributos (fecha, peso, precio unitario, TRM aplicada y totales) y permite eliminarlo devolviendo confirmación (`Navigator.pop(context, true)`).
+1. **Acceso Local (`LoginScreen`):** Permite al productor configurar su nombre y PIN de 4 dígitos en el primer ingreso (almacenados localmente mediante `shared_preferences` sin credenciales quemadas en el código) y valida el acceso en sesiones posteriores navegando hacia el inicio con `Navigator.pushReplacement`.
+2. **Inicio (`HomeScreen`):** Muestra la tarjeta resumen con el valor total del inventario en COP y USD, la tasa de cambio aplicada y el listado dinámico de lotes (`ListView.builder`). Incluye botón de actualización manual y botón flotante para agregar registros.
+3. **Nuevo Lote (`AddLoteScreen`):** Recibe como argumento la tasa USD actual, valida todos los campos mediante `GlobalKey<FormState>` y retorna el nuevo objeto `LoteAgricola` a la pantalla principal con `Navigator.pop(context, nuevoLote)`.
+4. **Detalle del Lote (`DetailScreen`):** Recibe el objeto `LoteAgricola` seleccionado al tocar una tarjeta, despliega todos sus atributos (fecha, peso, precio unitario, TRM aplicada y totales) y permite eliminarlo devolviendo confirmación (`Navigator.pop(context, true)`).
 
 ---
 
 ## 4. Capturas de Pantalla
 
-| Pantalla Principal | Registro de Lote | Detalle del Lote |
-| :---: | :---: | :---: |
-| ![Inicio](docs/images/home.png) | ![Registro](docs/images/registro.png) | ![Detalle](docs/images/detalle.png) |
+| Acceso Local | Pantalla Principal | Registro de Lote | Detalle del Lote |
+| :---: | :---: | :---: | :---: |
+| ![Acceso](docs/images/login.png) | ![Inicio](docs/images/home.png) | ![Registro](docs/images/registro.png) | ![Detalle](docs/images/detalle.png) |
 
 ---
 
@@ -69,8 +72,8 @@ La aplicación implementa **3 pantallas principales conectadas mediante navegaci
 
 ## 6. Persistencia Local de Datos
 
-* **Estrategia elegida:** Serialización de objetos Dart a formato JSON almacenados localmente en el dispositivo mediante el paquete **`shared_preferences`**.
-* **Justificación frente a alternativas:** Se evaluó `sqflite` (SQLite), pero se seleccionó `shared_preferences` + JSON porque el modelo consta de una entidad estructurada ligera que no requiere consultas relacionales complejas, y garantiza **ejecución nativa uniforme en Android, iOS y Web** sin requerir binarios nativos adicionales.
+* **Estrategia elegida:** Serialización de objetos Dart a formato JSON almacenados localmente en el dispositivo mediante el paquete **`shared_preferences`** (tanto para los lotes agrícolas como para el perfil local del productor).
+* **Justificación frente a alternativas:** Se evaluó `sqflite` (SQLite), pero se seleccionó `shared_preferences` + JSON porque el modelo consta de entidades estructuradas ligeras que no requieren consultas relacionales complejas, y garantiza **ejecución nativa uniforme en Android, iOS y Web** sin requerir binarios nativos adicionales.
 
 ---
 
@@ -85,9 +88,9 @@ La aplicación implementa **3 pantallas principales conectadas mediante navegaci
 
 ## 8. Privacidad y Seguridad
 
-* **Cero credenciales expuestas:** El código fuente no contiene claves privadas, tokens ni contraseñas.
+* **Cero credenciales expuestas:** El código fuente no contiene claves privadas, tokens ni contraseñas quemadas; el PIN de acceso lo define cada usuario en su propio dispositivo.
 * **Privacidad local:** Toda la información productiva registrada por el usuario permanece almacenada únicamente en su propio dispositivo y no se transmite a servidores de terceros.
-* **Validación de entradas:** Los formularios validan tipos numéricos, valores mayores a cero y cadenas no vacías antes de crear o guardar cualquier objeto.
+* **Validación de entradas:** Los formularios validan tipos numéricos, longitud exacta del PIN, valores mayores a cero y cadenas no vacías antes de crear o guardar cualquier objeto.
 
 ---
 
@@ -131,12 +134,12 @@ La aplicación implementa **3 pantallas principales conectadas mediante navegaci
 
 ## 12. Video de Sustentación
 
-* **Enlace al video (15 minutos):** [Pega aquí el enlace de YouTube (No listado) o Google Drive con acceso público]
+* **Enlace al video (15 minutos):** [Pega aquí el enlace público de Microsoft Teams / OneDrive]
 
 ---
 
 ## 13. Mejoras Futuras
 
-* Agregar una cuarta pantalla de **Estadísticas y Gráficos** para visualizar la participación porcentual por tipo de producto agrícola.
+* Agregar una pantalla de **Estadísticas y Gráficos** para visualizar la participación porcentual por tipo de producto agrícola.
 * Incorporar exportación del inventario a **PDF o CSV** para compartir reportes directamente por WhatsApp.
 * Ampliar la conversión de divisas para soportar **Euros (EUR)** además de dólares estadounidenses.
