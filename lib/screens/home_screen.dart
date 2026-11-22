@@ -5,6 +5,7 @@ import '../services/storage_service.dart';
 import '../widgets/lote_card.dart';
 import 'add_lote_screen.dart';
 import 'detail_screen.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -107,6 +108,17 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: _cargandoApi ? null : _consultarTasaActual,
           ),
+                    IconButton(
+            tooltip: 'Cerrar sesión',
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            },
+          ),
+
         ],
       ),
       body: Column(
