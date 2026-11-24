@@ -134,7 +134,7 @@ La aplicación implementa **4 pantallas principales conectadas mediante navegaci
 
 ## 12. Video de Sustentación
 
-* **Enlace al video (15 minutos):** [Pega aquí el enlace público de Microsoft Teams / OneDrive]
+* **Enlace al video (15 minutos):** [https://fumcc-my.sharepoint.com/:v:/r/personal/carloseduardorojasayala_fumc_edu_co/_layouts/15/stream.aspx?id=%2Fpersonal%2Fcarloseduardorojasayala_fumc_edu_co%2FDocuments%2FRecordings%2FProyecto_Final.mp4&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&share=cQoW6OZ4ilw7R5MMx7lCsEzDEgUB31hh1fLJGLuYfSkbuDfpOw]
 
 ---
 
